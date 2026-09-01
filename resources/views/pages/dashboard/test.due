@@ -1,745 +1,1035 @@
-
 @extends('layout.sidenav-layout')
-
 @section('content')
-<style>
-    .product-suggest-box{
-        position:absolute;
-        top:100%;
-        left:0;
-        right:0;
-        z-index:1050;
-        max-height:220px;
-        overflow-y:auto;
-        display:none;
-    }
-    .product-suggest-item{
-        cursor:pointer;
-    }
-</style>
-
-<div class="container-fluid py-2">
-
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h5 class="mb-0 fw-semibold">Stock Purchase</h5>
-    </div>
-
-    <form id="purchaseForm">
-        @csrf
-
-        {{-- SUPPLIER INFO --}}
-        <div class="card border-0 shadow-sm rounded-4 mb-3">
-            <div class="card-body py-2">
-                <div class="row g-2 align-items-center">
-                    <div class="col-lg-3 col-md-4 col-12">
-                        <label class="form-label small text-muted mb-0">Supplier <span class="text-danger">*</span></label>
-                        <div class="input-group input-group-sm">
-                            <select id="supplier_id" name="supplier_id" class="form-select">
-                                <option value="">Select Supplier</option>
-                            </select>
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createSupplierModal">+</button>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Invoice Section -->
+       <div class="col-md-5 col-lg-5 p-2">
+                <div class="shadow-sm h-100 bg-white rounded-3 p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <span class="text-bold text-dark">BILLED TO </span>
+                            <p class="text-xs mx-0 my-1">Name:  <span id="CName"></span> </p>
+                        <p class="text-xs mx-0 my-1">Mobile: <span id="CMobile"></span></p>
+                            <p class="text-xs mx-0 my-1">User ID:  <span id="CId"></span> </p>
+                        </div>
+                        <div class="col-4">
+                            <img class="w-50" src="{{"images/logo.png"}}">
+                            <p class="text-bold mx-0 my-1 text-dark">Invoice  </p>
+                            <p class="text-xs mx-0 my-1">Date: {{ date('Y-m-d') }} </p>
                         </div>
                     </div>
+                    <hr class="mx-0 my-2 p-0 bg-secondary"/>
+                    <div class="row">
+                        <div class="col-12">
+                            <table class="table w-100" id="invoiceTable">
+                                <thead class="w-100">
+                                <tr class="text-xs">
+                                    <td>Name</td>
+                                    <td>Qty</td>
+                                    <td>Total</td>
+                                    <td>Remove</td>
+                                </tr>
+                                </thead>
+                                <tbody  class="w-100" id="invoiceList">
 
-                    <div class="col-lg-2 col-md-4 col-6">
-                        <label class="form-label small text-muted mb-0">Phone</label>
-                        <input type="text" id="supplier_phone" name="supplier_phone" class="form-control form-control-sm" readonly>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+                    <hr class="mx-0 my-2 p-0 bg-secondary"/>
+                 <div class="row">
+    <div class="col-12">
 
-                    <div class="col-lg-3 col-md-4 col-6">
-                        <label class="form-label small text-muted mb-0">Address</label>
-                        <input type="text" id="supplier_address" name="supplier_address" class="form-control form-control-sm" readonly>
-                    </div>
+    <!-- SUMMARY BOX -->
+    <div class="border rounded p-3">
 
-                    <div class="col-lg-2 col-md-4 col-6">
-                        <label class="form-label small text-muted mb-0">Invoice No</label>
-                        <input type="text" id="invoice_no" name="invoice_no" class="form-control form-control-sm" readonly value="">
-                    </div>
-
-                    <div class="col-lg-2 col-md-4 col-6">
-                        <label class="form-label small text-muted mb-0">Purchase Date</label>
-                        <input type="date" id="purchase_date" name="purchase_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
-                    </div>
-                </div>
-            </div>
+        <div class="d-flex justify-content-between text-xs my-2">
+            <span class="text-dark fw-bold">TOTAL</span>
+            <span>৳ <span id="total"></span></span>
         </div>
 
-        <div class="row g-2">
-            {{-- PRODUCT INFO --}}
-            <div class="col-lg-5">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body py-2">
-                        <div class="row g-2">
-                            <div class="col-12">
-                                <label class="form-label small text-muted mb-0">Product Name <span class="text-danger">*</span></label>
-                                <div class="input-group input-group-sm position-relative">
-                                    <div class="position-relative flex-grow-1">
-                                        <input type="text" id="product_name_search" class="form-control form-control-sm" placeholder="Search / type product name" autocomplete="off">
-                                        <div id="productSuggestions" class="list-group product-suggest-box shadow-sm"></div>
-                                    </div>
-                                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#create-modal">+</button>
+      <div class="d-flex justify-content-between align-items-center text-xs my-2">
+
+    <span class="text-dark fw-bold">
+        VAT
+      <input
+    type="text"
+    id="vatP"
+    placeholder="0"
+    oninput="this.value=this.value.replace(/[^0-9.]/g,''); CalculateGrandTotal();"
+    class="form-control form-control-sm d-inline ms-1 text-center"
+    style="width:60px; height:26px;"
+>
+%
+    </span>
+
+    <span>৳ <span id="vat"></span></span>
+
+</div>
+
+        <div class="d-flex justify-content-between text-xs my-2">
+            <span class="text-dark fw-bold">DISCOUNT</span>
+            <span>৳ <span id="discount"></span></span>
+        </div>
+
+      <div class="d-flex justify-content-between text-xs my-2 border-top pt-2">
+    <span class="text-dark fw-bold">PAYABLE</span>
+    <span>৳ <span id="payable"></span></span>
+</div>
+
+<!-- NEW PAID ROW -->
+<div class="d-flex justify-content-between text-xs my-2">
+    <span class="text-success fw-bold">PAID</span>
+    <span class="text-success">
+        ৳ <span id="paidDisplay"></span>
+    </span>
+</div>
+
+    </div>
+
+    <div class="row mt-2">
+    <div class="col-6">
+
+    <!-- Discount -->
+    <div class="mb-2">
+    <label class="text-xxs mb-1">Discount (৳)</label>
+<input
+   value=""
+   placeholder="0"
+   min="0"
+   type="text"
+   step="1"
+   oninput="CalculateGrandTotal()"
+   class="form-control form-control-sm"
+   id="discountP"
+   style="height: 35px;">
+    </div>
+
+    <!-- ADD DUE (now BELOW discount) -->
+    <div class="mb-2">
+       <button type="button"
+        class="btn btn-outline-primary btn-sm w-100"
+        style="height: 38px;"
+        onclick="openDueModal()">
+    ADD DUE
+</button>
+    </div>
+
+</div>
+
+</div>
+    <!-- CONFIRM BUTTON -->
+    <button onclick="createInvoice()"
+            class="btn bg-gradient-primary w-100 mt-3">
+        Confirm
+    </button>
+
+</div>
+</div>
+                </div>
+            </div>
+
+            <!-- Product Section -->
+          <div class="col-md-4 col-lg-4 p-2">
+                <div class="shadow-sm h-100 bg-white rounded-3 p-3">
+
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="text-xs text-bold">Products</h6>
+
+        <button class="btn btn-sm btn-primary"
+                onclick="OpenProductModal()">
+            + Add Product
+        </button>
+    </div>
+
+
+                    <table class="table  w-100" id="productTable">
+                        <thead class="w-100">
+                        <tr class="text-xs text-bold">
+                            <td>Product</td>
+                            <td>Pick</td>
+                        </tr>
+                        </thead>
+                        <tbody  class="w-100" id="productList">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Customer Section with Add Button -->
+          <div class="col-md-3 col-lg-3 p-2">
+                <div class="shadow-sm h-100 bg-white rounded-3 p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-xs text-bold">Customer</h6>
+                        <button class="btn btn-sm btn-primary" onclick="OpenCustomerModal()">+ Add Customer</button>
+                    </div>
+                    <table class="table table-sm w-100" id="customerTable">
+                        <thead class="w-100">
+                        <tr class="text-xs text-bold">
+                            <td>Customer</td>
+                            <td>Pick</td>
+                        </tr>
+                        </thead>
+                        <tbody  class="w-100" id="customerList">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal animated zoomIn" id="create-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title" id="exampleModalLabel">Add Product</h6>
+                </div>
+                <div class="modal-body">
+                    <form id="add-form">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-12 p-1">
+                                    <label class="form-label">Product ID *</label>
+                                    <input type="text" class="form-control" id="PId">
+                                    <label class="form-label mt-2">Product Name *</label>
+                                    <input type="text" class="form-control" id="PName">
+                                    <label class="form-label mt-2">Product Price *</label>
+                                    <input type="text" class="form-control" id="PPrice">
+                                    <label class="form-label mt-2">Product Qty *</label>
+                                    <input type="text" class="form-control" id="PQty">
                                 </div>
                             </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted mb-0">Category</label>
-                                <select class="form-select form-select-sm" id="product_category" name="product_category">
-                                    <option value="">Select Category</option>
-                                    <option value="Electronics">Electronics</option>
-                                    <option value="Stationery">Stationery</option>
-                                </select>
-                            </div>
-                           <div class="col-md-6">
-    <label class="form-label small text-muted mb-0">Current Stock</label>
-    <input type="number" id="current_stock" class="form-control form-control-sm" readonly value="0">
-</div>
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted mb-0">Quantity <span class="text-danger">*</span></label>
-                                <input type="number" min="1" step="1" id="product_qty" class="form-control form-control-sm" placeholder="0">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted mb-0">Buy Price <span class="text-danger">*</span></label>
-                                <input type="number" min="0" step="1" id="buy_price" class="form-control form-control-sm" placeholder="0.00">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted mb-0">Sell Price <span class="text-danger">*</span></label>
-                                <input type="number" min="0" step="1" id="sell_price" class="form-control form-control-sm" placeholder="0.00">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted mb-0">Note</label>
-                                <input type="text" id="product_note" class="form-control form-control-sm" placeholder="Optional note...">
-                            </div>
-
-                            <div class="col-12 pt-1">
-                                <button type="button" class="btn btn-primary w-100 btn-sm fw-semibold" id="add_product_btn">
-                                    Add Product
-                                </button>
-                            </div>
                         </div>
-                    </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                    <button onclick="add()" id="save-btn" class="btn bg-gradient-success" >Add</button>
                 </div>
             </div>
+        </div>
+    </div>
 
-           {{-- PURCHASE ITEMS + SUMMARY --}}
-<div class="col-lg-7">
-    <div class="card border-0 shadow-sm rounded-4 h-100">
-        <div class="card-body py-2">
+    <!-- Add Customer Modal -->
+    <div class="modal animated zoomIn" id="createCustomerModal" tabindex="-1" aria-labelledby="createCustomerLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createCustomerLabel">Create Customer</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="createCustomerForm">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-12 p-1">
+                                    <label class="form-label">Customer Name *</label>
+                                    <input type="text" class="form-control" id="customerName">
+                                    <label class="form-label mt-2">Customer Email *</label>
+                                    <input type="text" class="form-control" id="customerEmail">
+                                    <label class="form-label mt-2">Customer Mobile *</label>
+                                    <input type="text" class="form-control" id="customerMobile">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="modal-close-customer" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                    <button onclick="SaveCustomer()" id="save-customer-btn" class="btn bg-gradient-success">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            {{-- PURCHASE ITEMS TABLE --}}
-            <div class="table-responsive rounded-3 border">
-                <table class="table table-sm align-middle mb-0 text-center">
-                    <thead class="table-light">
-                       <tr>
-    <th style="width:10px;">SL</th>
-    <th style="width:25%;">Name</th>
-    <th style="width:20%;">Qty</th>
-    <th style="width:25%;">Buy</th>
-    <th style="width:25%;">Sell</th>
-    <th style="width:3px;"></th>
-</tr>
-                    </thead>
-               <tbody id="purchaseList">
-    <tr class="purchase-row" id="defaultRow" style="background-color:#f8f9fa">
-        <td class="serial">1</td>
-        <td>
-            <input type="hidden" name="items[0][product_id]" value="">
-            <input type="text" class="form-control form-control-sm row-product-name" name="items[0][product_name]" value="">
-            <input type="hidden" name="items[0][category]" value="">
-        </td>
-     <td><input type="number" name="items[0][qty]" class="form-control form-control-sm row-qty" value=""></td>
 
-<td><input type="number" name="items[0][buy_price]" class="form-control form-control-sm row-buy" value=""></td>
+    <div class="modal fade" id="dueModal" tabindex="-1">
+<div class="modal-dialog modal-md modal-dialog-centered">        <div class="modal-content">
 
-<td><input type="number" name="items[0][sell_price]" class="form-control form-control-sm row-sell" value=""></td>
-        <td class="text-end">
-            <button type="button" class="btn btn-outline-danger btn-sm p-0 remove-row-btn"
-                style="width:24px; height:24px;">×</button>
-        </td>
-    </tr>
-</tbody>
-                </table>
+            <div class="modal-header">
+                <h6 class="modal-title">Due Payment</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" ></button>
             </div>
 
-        {{-- final summary  box --}}
+            <div class="modal-body">
 
-<div class="card border rounded-4 bg-light-subtle p-3 mt-3 shadow-sm">
+                <!-- TOTAL (READ ONLY) -->
+                <label class="text-xxs">Total Payable</label>
+                <input type="text" class="form-control form-control-sm mb-2"
+                       id="dueTotal" readonly>
 
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h6 class="mb-0 fw-semibold text-primary">Final Summary</h6>
-        <div class="w-45 ms-2">
-            <label class="form-label small text-muted mb-1">Supplier Name</label>
-            <input readonly class="form-control form-control-sm" id="summary_supplier_name" value="ABC Supplier">
-        </div>
-    </div>
+                <!-- PAID -->
+                <label class="text-xxs">Paid Amount</label>
+                <input type="number" class="form-control form-control-sm mb-2"
+                       id="paidAmount" oninput="calculateDue()">
 
+                <!-- DUE (AUTO) -->
+                <label class="text-xxs">Due Amount</label>
+                <input type="text" class="form-control form-control-sm mb-2"
+                       id="dueAmount" readonly>
 
-    <div class="row g-1 align-items-center text-center">
-        <div class="col-md-3 col-6">
-            <label class="form-label small text-muted mb-1">Total Qty</label>
-            <input readonly class="form-control form-control-sm text-center fw-semibold" id="summary_total_qty" value="10">
-        </div>
-        <div class="col-md-3 col-6">
-            <label class="form-label small text-muted mb-1">Total Cost</label>
-            <input readonly class="form-control form-control-sm text-end fw-semibold" id="summary_total_cost" value="100000">
-        </div>
-        <div class="col-md-3 col-6">
-            <label class="form-label small text-muted mb-1">Paid</label>
-    <input type="number"
+                <!-- DUE DATE -->
+                <label class="text-xxs">Due Date</label>
+                <input type="date" class="form-control form-control-sm"
+                       id="dueDate">
 
-           class="form-control form-control-sm text-end fw-semibold"
-           id="paid_amount"
-           value="">
-        </div>
-        <div class="col-md-3 col-6">
-           <label class="form-label small text-muted mb-1">Due</label>
-    <input readonly
-           class="form-control form-control-sm text-end fw-semibold"
-           id="summary_total_due"
-           value="0">
-        </div>
-    </div>
-</div>
-         {{-- DUE PAYMENT PLAN --}}
-{{-- DUE PAYMENT PLAN --}}
-<div class="card border-0 shadow-sm rounded-4 mt-3">
-    <div class="card-body py-2">
-
-
-    <button type="button"
-        class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
-        id="toggle_due_btn">
-
-        Add Due Payment
-        <span id="due_arrow">▾</span>
-    </button>
-</div>
-
-        <div id="dueDrawer" style="display:none; margin-top:10px;">
-
-            <div class="table-responsive border rounded-3">
-                <table class="table table-sm mb-0 align-middle">
-                    <thead class="table-light">
-                        <tr class="small">
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Note</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="dueScheduleBody"></tbody>
-                </table>
             </div>
 
-            <button type="button"
-                class="btn btn-outline-secondary btn-sm mt-2"
-                id="add_due_row_btn">
-                + Add Row
-            </button>
-        </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-outline-secondary"
+                        data-bs-dismiss="modal"
+                        >
+                    Close
+                </button>
 
+                <button class="btn btn-sm btn-primary"
+                        data-bs-dismiss="modal"
+                        onclick="saveDue()">
+                    Save
+                </button>
+            </div>
+
+        </div>
     </div>
 </div>
-            <button type="submit" class="btn btn-success w-100 mt-2 py-2 btn-sm fw-semibold" id="save_purchase_btn">
-                Save Purchase
-            </button>
+
+{{--
+product --}}
+<!-- Create Product Modal -->
+<div class="modal animated zoomIn"
+     id="createProductModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Create Product</h5>
+            </div>
+
+            <div class="modal-body">
+
+                <form id="save-product-form">
+
+                    <!-- Category -->
+                    <label class="form-label">Category</label>
+                    <select class="form-control form-select"
+                            id="productCategory">
+
+                        <option value="">Select Category</option>
+
+                    </select>
+
+                    <!-- Subcategory -->
+                    <label class="form-label mt-2">Sub Category</label>
+
+                    <select class="form-control form-select"
+                            id="productSubCategory">
+
+                        <option value="">Select Sub Category</option>
+
+                    </select>
+
+                    <!-- Product Name -->
+                    <label class="form-label mt-2">Name</label>
+
+                    <input type="text"
+                           class="form-control"
+                           id="productName">
+
+                    <!-- Quantity -->
+                    <label class="form-label mt-2">Quantity</label>
+
+                    <input type="number"
+                           class="form-control"
+                           id="productQuantity">
+
+                    <!-- Buy Price -->
+                    <label class="form-label mt-2">Buy Price</label>
+
+                    <input type="text"
+                           class="form-control"
+                           id="productBuyPrice">
+
+                    <!-- Sell Price -->
+                    <label class="form-label mt-2">Sell Price</label>
+
+                    <input type="text"
+                           class="form-control"
+                           id="productSellPrice">
+
+                    <!-- Note -->
+                    <label class="form-label mt-2">Note</label>
+
+                    <input type="text"
+                           class="form-control"
+                           id="productNote">
+
+                    <br>
+
+                    <!-- Preview -->
+                    <img class="w-15"
+                         id="newImg"
+                         src="{{asset('images/default.jpg')}}">
+
+                    <br><br>
+
+                    <!-- Image -->
+                    <label class="form-label">Image</label>
+
+                    <input type="file"
+                           class="form-control"
+                           id="productImg"
+                           oninput="newImg.src=window.URL.createObjectURL(this.files[0])">
+
+                </form>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn bg-gradient-primary"
+                        data-bs-dismiss="modal">
+                    Close
+                </button>
+
+                <button onclick="SaveProduct()"
+                        class="btn bg-gradient-success">
+                    Save
+                </button>
+
+            </div>
 
         </div>
     </div>
 </div>
-        </div>
-    </form>
-</div>
 
-<script>
-    let itemIndex = 1, dueIndex = 0;
-    const purchaseList = document.getElementById('purchaseList');
-  function generateInvoiceNo() {
-    const now = new Date();
 
-    // 4-digit time (HHMM)
-    const time =
-        String(now.getHours()).padStart(2, '0') +
-        String(now.getMinutes()).padStart(2, '0');
 
-    // 4-digit random
-    const random = Math.floor(1000 + Math.random() * 9000);
 
-    return `INV${time}${random}`;
+
+
+    <script>
+        (async ()=>{
+          showLoader();
+          await CustomerList();
+          await ProductList();
+          hideLoader();
+        })()
+
+        let InvoiceItemList=[];
+
+        function ShowInvoiceItem() {
+            let invoiceList=$('#invoiceList');
+            invoiceList.empty();
+
+            InvoiceItemList.forEach(function (item,index) {
+                let row=`<tr class="text-xs">
+                        <td>${item['product_name']}</td>
+                        <td>${item['qty']}</td>
+                        <td>${item['sale_price']}</td>
+                        <td><a data-index="${index}" class="btn remove text-xxs px-2 py-1  btn-sm m-0">Remove</a></td>
+                     </tr>`
+                invoiceList.append(row)
+            })
+
+            CalculateGrandTotal();
+
+            $('.remove').on('click', async function () {
+                let index= $(this).data('index');
+                removeItem(index);
+            })
+        }
+
+        function removeItem(index) {
+            InvoiceItemList.splice(index,1);
+            ShowInvoiceItem()
+        }
+
+        function DiscountChange() {
+            CalculateGrandTotal();
+        }
+
+    function CalculateGrandTotal(){
+    let Total = 0;
+    let Vat = 0;
+    let Payable = 0;
+    let Discount = 0;
+
+    let vatPercentage = parseFloat(document.getElementById('vatP').value) || 0;
+    let discountAmount = parseFloat(document.getElementById('discountP').value) || 0;
+
+    // Total
+    InvoiceItemList.forEach((item)=>{
+        Total += parseFloat(item['sale_price']);
+    });
+
+    // Discount (FIXED AMOUNT)
+ let OriginalTotal = Total;
+
+// Discount
+if(discountAmount > OriginalTotal){
+    discountAmount = OriginalTotal;
 }
-    const dueScheduleBody = document.getElementById('dueScheduleBody');
-    const productSuggestions = document.getElementById('productSuggestions');
 
-    let productData = [];
-    let selectedProduct = null;
+Discount = discountAmount;
 
-    function toNumber(val){ return parseFloat(val)||0; }
-   function formatMoney(val){
-    return Number(val || 0);
-}
-    function recalcTotals(){
-        let totalQty = 0, totalCost = 0;
-        document.querySelectorAll('.purchase-row').forEach((row,i)=>{
-            const qty = toNumber(row.querySelector('.row-qty')?.value);
-            const buy = toNumber(row.querySelector('.row-buy')?.value);
-            totalQty += qty;
-            totalCost += qty*buy;
-            const serialCell = row.querySelector('.serial');
-            if (serialCell) serialCell.textContent = i+1;
-        });
+// VAT AFTER DISCOUNT
+let afterDiscount = OriginalTotal - Discount;
 
-        const paid = toNumber(document.getElementById('paid_amount').value);
-        const due = totalCost - paid;
+Vat = (afterDiscount * vatPercentage / 100);
 
-        document.getElementById('summary_total_qty').value = totalQty;
-        document.getElementById('summary_total_cost').value = formatMoney(totalCost);
-        document.getElementById('summary_total_due').value = formatMoney(due<0?0:due);
+// FINAL PAYABLE
+Payable = afterDiscount + Vat;
+    // Format
+   Total = OriginalTotal.toFixed(2);
+    Vat = Vat.toFixed(2);
+    Discount = Discount.toFixed(2);
+    Payable = Payable.toFixed(2);
 
-        const supplierName = document.getElementById('supplier_id').selectedOptions[0]?.text || '';
-        document.getElementById('summary_supplier_name').value = supplierName !== 'Select Supplier' ? supplierName : '';
+    // UI
+    document.getElementById('total').innerText = Total;
+    document.getElementById('vat').innerText = Vat;
+    document.getElementById('discount').innerText = Discount;
+    document.getElementById('payable').innerText = Payable;
+
+    if (!window.invoiceDue) {
+
+    document.getElementById('paidDisplay').innerText = Payable;
+
+} else {
+
+    // IF DUE USED
+    let oldPaid = parseFloat(window.invoiceDue.paid || 0);
+    let oldDue = parseFloat(window.invoiceDue.due || 0);
+
+    let oldTotal = oldPaid + oldDue;
+
+    // calculate same paid ratio after discount/vat
+    let newPaid = Payable;
+
+    if (oldTotal > 0) {
+        newPaid = (Payable * oldPaid) / oldTotal;
     }
 
-   function createPurchaseRow(data){
+    document.getElementById('paidDisplay').innerText =
+        parseFloat(newPaid).toFixed(2);
+}
+}
 
-    const defaultRow = document.getElementById('defaultRow');
+        function add() {
+           let PId= document.getElementById('PId').value;
+           let PName= document.getElementById('PName').value;
+           let PPrice=document.getElementById('PPrice').value;
+           let PQty= document.getElementById('PQty').value;
+           let PTotalPrice=(parseFloat(PPrice)*parseFloat(PQty)).toFixed(2);
+           if(PId.length===0){
+               errorToast("Product ID Required");
+           }
+           else if(PName.length===0){
+               errorToast("Product Name Required");
+           }
+           else if(PPrice.length===0){
+               errorToast("Product Price Required");
+           }
+           else if(PQty.length===0){
+               errorToast("Product Quantity Required");
+           }
+           else{
+               let item={product_name:PName,product_id:PId,qty:PQty,sale_price:PTotalPrice};
+               InvoiceItemList.push(item);
+               $('#create-modal').modal('hide')
+               ShowInvoiceItem();
+           }
+        }
 
-    // 👉 If default row exists → replace it
-    if(defaultRow){
-        defaultRow.querySelector('[name*="[product_id]"]').value = data.product_id || '';
-        defaultRow.querySelector('.row-product-name').value = data.product_name || '';
-        defaultRow.querySelector('[name*="[category]"]').value = data.category || '';
-        defaultRow.querySelector('.row-qty').value = data.qty || 1;
-        defaultRow.querySelector('.row-buy').value = data.buy_price || 0;
-        defaultRow.querySelector('.row-sell').value = data.sell_price || 0;
+        function addModal(id,name,price) {
+            document.getElementById('PId').value=id
+            document.getElementById('PName').value=name
+            document.getElementById('PPrice').value=price
+            $('#create-modal').modal('show')
+        }
 
-        defaultRow.removeAttribute('id');
+    async function CustomerList(){
+    let res = await axios.get("/list-customer");
+    let customerList = $("#customerList");
+    let customerTable = $("#customerTable");
+    customerTable.DataTable().destroy();
+    customerList.empty();
 
-        defaultRow.querySelectorAll('.row-qty,.row-buy').forEach(input => {
-            input.addEventListener('input', recalcTotals);
-        });
+    // Sort so latest customers are first
+    res.data.sort((a,b)=> b.id - a.id); // Assuming higher ID = latest
 
-        defaultRow.querySelector('.remove-row-btn').addEventListener('click', ()=>{
-            defaultRow.remove();
-            recalcTotals();
-        });
+    res.data.forEach(function(item, index){
+        let row = `<tr class="text-xs">
+                <td><i class="bi bi-person"></i> ${item['name']}</td>
+                <td><a data-name="${item['name']}" data-mobile="${item['mobile']}" data-id="${item['id']}" class="btn btn-outline-dark addCustomer text-xxs px-2 py-1 btn-sm m-0">Add</a></td>
+             </tr>`;
+        customerList.append(row);
+    });
+$('.addCustomer').on('click', function () {
 
-        recalcTotals();
+    let CName = $(this).data('name');
+    let CMobile = $(this).data('mobile');
+    let CId = $(this).data('id');
+
+    $("#CName").text(CName);
+    $("#CMobile").text(CMobile);
+    $("#CId").text(CId);
+});
+
+    new DataTable('#customerTable',{
+         ordering: false,
+        scrollCollapse: false,
+        info: false,
+        lengthChange: false
+    });
+}
+async function SaveCustomer() {
+    let name = document.getElementById('customerName').value;
+    let email = document.getElementById('customerEmail').value;
+    let mobile = document.getElementById('customerMobile').value;
+
+    if (!name || !email || !mobile) return errorToast("All fields required!");
+
+    document.getElementById('modal-close-customer').click();
+    showLoader();
+
+    try {
+        let res = await axios.post("/create-customer", {name, email, mobile});
+        hideLoader();
+
+        if(res.status === 200){
+            successToast("Customer Created!");
+            document.getElementById("createCustomerForm").reset();
+
+            // Prepend instead of append
+            let row = `<tr class="text-xs">
+                <td><i class="bi bi-person"></i> ${res.data.name}</td>
+                <td><a data-name="${res.data.name}" data-email="${res.data.email}" data-id="${res.data.id}" class="btn btn-outline-dark addCustomer text-xxs px-2 py-1 btn-sm m-0">Add</a></td>
+            </tr>`;
+
+            $('#customerList').prepend(row);
+
+            // Rebind click event
+            $('.addCustomer').off('click').on('click', function(){
+                let CName = $(this).data('name');
+              let CMobile = $(this).data('mobile');
+                let CId = $(this).data('id');
+
+                $("#CName").text(CName);
+               $("#CMobile").text(CMobile);
+                $("#CId").text(CId);
+            });
+
+        } else {
+            errorToast("Request failed!");
+        }
+    } catch (err) {
+        hideLoader();
+        errorToast("Something went wrong!");
+    }
+}
+        async function ProductList(){
+            let res=await axios.get("/list-product");
+            let productList=$("#productList");
+            let productTable=$("#productTable");
+            productTable.DataTable().destroy();
+            productList.empty();
+
+            res.data.forEach(function (item,index) {
+                let row=`<tr class="text-xs">
+                        <td> <img class="w-10" src="${item['img_url']}"/> ${item['name']} ($ ${item['sell_price']})</td>
+                        <td><a data-name="${item['name']}" data-price="${item['sell_price']}" data-id="${item['id']}" class="btn btn-outline-dark text-xxs px-2 py-1 addProduct  btn-sm m-0">Add</a></td>
+                     </tr>`
+                productList.append(row)
+            })
+
+            $('.addProduct').on('click', async function () {
+                let PName= $(this).data('name');
+                let PPrice= $(this).data('price');
+                let PId= $(this).data('id');
+                addModal(PId,PName,PPrice)
+            })
+
+           new DataTable('#productTable',{
+    ordering: false,
+    scrollCollapse: false,
+    info: false,
+    lengthChange: false
+});
+        }
+
+        async function createInvoice() {
+
+               const confirm = await Swal.fire({
+        title: "Save Invoice?",
+        text: "Are you sure you want to save this invoice?",
+        icon: "question",
+        width: "350px",
+        showCancelButton: true,
+        confirmButtonText: "Yes, Save",
+        cancelButtonText: "No",
+        confirmButtonColor: "#0d6efd"
+    });
+
+    if(!confirm.isConfirmed){
+        return; // stop if user clicks No
+    }
+
+
+            let total=document.getElementById('total').innerText;
+            let discount=document.getElementById('discount').innerText
+            let vat=document.getElementById('vat').innerText
+            let payable=document.getElementById('payable').innerText
+            let CId=document.getElementById('CId').innerText;
+let CName = document.getElementById('CName').innerText;
+let CMobile = document.getElementById('CMobile').innerText;
+
+let finalPaid, finalDue;
+
+if (!window.invoiceDue) {
+    // 👉 No due used → FULL PAID
+    finalPaid = payable;
+    finalDue = 0;
+} else {
+    finalPaid = window.invoiceDue.paid;
+    finalDue = window.invoiceDue.due;
+}
+
+let Data = {
+    total: total,
+    discount: discount,
+    vat: vat,
+    payable: payable,
+    customer_id: CId,
+    customer_name: CName,
+    customer_mobile: CMobile,
+    paid: finalPaid,
+    due: finalDue,
+    due_date: window.invoiceDue?.dueDate || null,
+    items: InvoiceItemList
+};
+
+            if(CId.length===0){
+                errorToast("Customer Required !")
+            }
+            else if(InvoiceItemList.length===0){
+                errorToast("Product Required !")
+            }
+            else{
+                showLoader();
+                let res=await axios.post("/invoice-create",Data)
+                hideLoader();
+               if(res.data.status === true){
+    successToast("Invoice Created");
+       // 1. Clear invoice items
+    InvoiceItemList = [];
+    ShowInvoiceItem();
+
+    // 2. Clear customer info
+    $("#CName").text("");
+    $("#CMobile").text("");
+    $("#CId").text("");
+
+    // 3. Clear totals
+    $("#total").text("");
+    $("#vat").text("");
+    $("#discount").text("");
+    $("#payable").text("");
+    $("#paidDisplay").text("");
+
+    // 4. Reset discount input
+    $("#discountP").val(0);
+$("#PQty").val("");
+
+    // 5. Reset due system
+    window.invoiceDue = null;
+
+    // 6. Reset due modal fields (optional safety)
+    $("#dueTotal").val("");
+    $("#paidAmount").val("");
+    $("#dueAmount").val("");
+    $("#dueDate").val("");
+
+    // 7. Optional UX: scroll back to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
+} else {
+    errorToast(res.data.error || "Something Went Wrong");
+}
+            }
+        }
+
+        // New Customer Modal Functions
+        function OpenCustomerModal(){
+            $('#createCustomerModal').modal('show');
+        }
+
+
+
+      function openDueModal() {
+    let total = document.getElementById("payable").innerText;
+
+    document.getElementById("dueTotal").value = total;
+
+    // 👉 Restore old values if exist
+    if (window.invoiceDue) {
+        document.getElementById("paidAmount").value = window.invoiceDue.paid ?? "";
+        document.getElementById("dueAmount").value = window.invoiceDue.due ?? "";
+        document.getElementById("dueDate").value = window.invoiceDue.dueDate ?? "";
+    } else {
+        document.getElementById("paidAmount").value = "";
+        document.getElementById("dueAmount").value = "";
+        document.getElementById("dueDate").value = "";
+    }
+
+    $('#dueModal').modal('show');
+}
+
+function calculateDue() {
+    let total = parseFloat(document.getElementById("dueTotal").value || 0);
+    let paid = parseFloat(document.getElementById("paidAmount").value || 0);
+
+    let due = total - paid;
+
+    if (due < 0) due = 0;
+
+    document.getElementById("dueAmount").value = due.toFixed(2);
+}
+
+function resetDue() {
+    document.getElementById("paidAmount").value = "";
+    document.getElementById("dueAmount").value = "";
+    document.getElementById("dueDate").value = "";
+}
+
+function saveDue() {
+
+    let paidInput = document.getElementById("paidAmount").value;
+
+    // IF EMPTY = FULL PAID
+    if (paidInput === "") {
+
+        window.invoiceDue = null;
+
+        document.getElementById("paidDisplay").innerText =
+            document.getElementById("payable").innerText;
+
         return;
     }
 
-    // 👉 Normal add after first row used
-    const tr = document.createElement('tr');
-    tr.className = 'purchase-row';
+    let paid = parseFloat(paidInput);
+    let total = parseFloat(document.getElementById("dueTotal").value);
 
-    tr.innerHTML = `
-        <td class="serial"></td>
-        <td>
-            <input type="hidden" name="items[${itemIndex}][product_id]" value="${data.product_id || ''}">
-            <input type="text" class="form-control form-control-sm row-product-name" name="items[${itemIndex}][product_name]" value="${data.product_name || ''}">
-            <input type="hidden" name="items[${itemIndex}][category]" value="${data.category || ''}">
-        </td>
-     <td><input type="number" name="items[${itemIndex}][qty]" class="form-control form-control-sm row-qty" value="${data.qty || 1}"></td>
+    let due = total - paid;
 
-<td><input type="number" name="items[${itemIndex}][buy_price]" class="form-control form-control-sm row-buy" value="${data.buy_price || 0}"></td>
+    if (due < 0) due = 0;
 
-<td><input type="number" name="items[${itemIndex}][sell_price]" class="form-control form-control-sm row-sell" value="${data.sell_price || 0}"></td>
-        <td class="text-end">
-            <button type="button" class="btn btn-outline-danger btn-sm p-0 remove-row-btn"
-                style="width:24px; height:24px;">×</button>
-        </td>
-    `;
+    window.invoiceDue = {
+        paid: paid,
+        due: due,
+        dueDate: document.getElementById("dueDate").value
+    };
 
-    tr.querySelectorAll('.row-qty,.row-buy').forEach(input => {
-        input.addEventListener('input', recalcTotals);
+    // FRONTEND DISPLAY ONLY
+    document.getElementById("paidDisplay").innerText =
+        parseFloat(paid).toFixed(2);
+}
+
+
+
+
+
+//product
+
+
+// OPEN PRODUCT MODAL
+function OpenProductModal(){
+    $('#createProductModal').modal('show');
+}
+
+
+// LOAD CATEGORY
+FillCategoryDropDown();
+
+async function FillCategoryDropDown(){
+
+    let res = await axios.get("/list-category");
+
+    let categorySelect =
+        document.getElementById('productCategory');
+
+    categorySelect.innerHTML =
+        `<option value="">Select Category</option>`;
+
+    res.data.forEach(function(item){
+
+        categorySelect.innerHTML += `
+            <option value="${item.id}">
+                ${item.name}
+            </option>
+        `;
     });
 
-    tr.querySelector('.remove-row-btn').addEventListener('click', ()=>{
-        tr.remove();
-        recalcTotals();
-    });
-
-    purchaseList.appendChild(tr);
-    itemIndex++;
-    recalcTotals();
-}
-
- function addDueRow(dueDate = '', amount = '', note = '') {
-
-    const tr = document.createElement('tr');
-
-    tr.innerHTML = `
-        <td>
-            <input type="date"
-                class="form-control form-control-sm"
-                name="due_plan[${dueIndex}][due_date]"
-                value="${dueDate}">
-        </td>
-
-        <td>
-            <input type="number"
-                min="0"
-                step="1"
-                class="form-control form-control-sm"
-                name="due_plan[${dueIndex}][amount]"
-                value="${amount}">
-        </td>
-
-        <td>
-            <input type="text"
-                class="form-control form-control-sm"
-                name="due_plan[${dueIndex}][note]"
-                value="${note}"
-                placeholder="Optional">
-        </td>
-
-        <td class="text-center">
-            <button type="button"
-                class="btn btn-outline-danger btn-sm p-0 remove-due-btn"
-                style="width:24px;height:24px;">
-                ×
-            </button>
-        </td>
-    `;
-
-    tr.querySelector('.remove-due-btn').addEventListener('click', () => {
-        tr.remove();
-    });
-
-    dueScheduleBody.appendChild(tr);
-    dueIndex++;
-}
-let supplierData = [];
-
-async function loadSupplierList(){
-    try{
-        const res = await axios.get('/list-supplier', {
-            headers: {
-                'id': localStorage.getItem('user_id')
-            }
-        });
-
-        supplierData = Array.isArray(res.data) ? res.data : [];
-
-        const select = document.getElementById('supplier_id');
-
-        if(!select) return;
-
-        select.innerHTML = `<option value="">Select Supplier</option>`;
-
-        supplierData.forEach(item=>{
-            const opt = document.createElement('option');
-            opt.value = item.id;
-            opt.textContent = item.name;
-            select.appendChild(opt);
-        });
-
-    }catch(err){
-        console.error("Supplier Load Error:", err);
-    }
-}
-    async function loadProductList(){
-        try{
-           const res = await axios.get('/list-product');
-
-productData = Array.isArray(res.data)
-    ? res.data
-    : (res.data?.data ?? [])
-        }catch(err){
-            console.error(err);
-            productData = [];
-        }
-    }
-
-    function hideProductSuggestions(){
-        productSuggestions.style.display = 'none';
-        productSuggestions.innerHTML = '';
-    }
-
-   function fillProductFields(product){
-    selectedProduct = product || null;
-
-    document.getElementById('product_name_search').value = product?.name || '';
-
-    const buy = product?.buy_price ?? '';
-    const sell = product?.sell_price ?? '';
-    const categoryName = product?.category?.name || '';
-    const stock = product?.quantity ?? 0;
-    const note = product?.note ?? '';
-
-    document.getElementById('buy_price').value = buy;
-    document.getElementById('sell_price').value = sell;
-    document.getElementById('current_stock').value = stock;
-    document.getElementById('product_note').value = note;
-
-    const categorySelect = document.getElementById('product_category');
-if(categoryName){
-    setTimeout(()=>{
-        categorySelect.value = categoryName;
-    },100);
-}
-
-    hideProductSuggestions();
+    window.categoryData = res.data;
 }
 
 
-let categoryData = [];
+// LOAD SUBCATEGORY
+document.getElementById('productCategory')
+.addEventListener('change', function () {
 
-async function loadCategoryList(){
-    try{
-        const res = await axios.get('/list-category');
+    let categoryId = this.value;
 
-        categoryData = res.data || [];
+    let subSelect =
+        document.getElementById('productSubCategory');
 
-        const select = document.getElementById('product_category');
+    subSelect.innerHTML =
+        `<option value="">Select Sub Category</option>`;
 
-        select.innerHTML = `<option value="">Select Category</option>`;
+    let selectedCategory =
+        window.categoryData.find(c => c.id == categoryId);
 
-        categoryData.forEach(item=>{
-            select.innerHTML += `<option value="${item.name}">${item.name}</option>`;
-        });
+    if(selectedCategory &&
+       selectedCategory.sub_categories.length > 0){
 
-    }catch(err){
-        console.error("Category Load Error:", err);
-    }
-}
+        selectedCategory.sub_categories.forEach(function(sub){
 
-
-    function renderProductSuggestions(query=''){
-        const q = query.trim().toLowerCase();
-        if(!q){
-            hideProductSuggestions();
-            return;
-        }
-
-        const matches = productData.filter(item =>
-            (item.name || '').toLowerCase().includes(q)
-        ).slice(0, 8);
-
-        if(matches.length === 0){
-            productSuggestions.innerHTML = `<div class="list-group-item small text-muted">No product found</div>`;
-            productSuggestions.style.display = 'block';
-            return;
-        }
-
-        productSuggestions.innerHTML = '';
-        matches.forEach(item=>{
-            const div = document.createElement('button');
-            div.type = 'button';
-            div.className = 'list-group-item list-group-item-action product-suggest-item';
-            div.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <span>${item.name || ''}</span>
-                    <small class="text-muted">${item.buy_price ?? ''}</small>
-                </div>
+            subSelect.innerHTML += `
+                <option value="${sub.id}">
+                    ${sub.name}
+                </option>
             `;
-            div.addEventListener('click', ()=>fillProductFields(item));
-            productSuggestions.appendChild(div);
         });
-
-        productSuggestions.style.display = 'block';
-    }
-
-    document.getElementById('product_name_search').addEventListener('input', function(){
-        selectedProduct = null;
-        renderProductSuggestions(this.value);
-    });
-
-    document.getElementById('product_name_search').addEventListener('focus', function(){
-        renderProductSuggestions(this.value);
-    });
-
-    document.addEventListener('click', function(e){
-        const wrap = document.getElementById('product_name_search')?.closest('.position-relative');
-        if(wrap && !wrap.contains(e.target)){
-            hideProductSuggestions();
-        }
-    });
-
-    document.getElementById('add_product_btn').addEventListener('click', ()=>{
-        const product_name = document.getElementById('product_name_search').value.trim();
-        const category = document.getElementById('product_category').value.trim();
-        const qty = document.getElementById('product_qty').value;
-        const buy_price = document.getElementById('buy_price').value;
-        const sell_price = document.getElementById('sell_price').value;
-
-        if(!product_name || !qty || !buy_price || !sell_price){
-            alert('Fill all required product fields');
-            return;
-        }
-
-        const matchedProduct = selectedProduct || productData.find(p => (p.name || '').toLowerCase() === product_name.toLowerCase());
-
-        createPurchaseRow({
-            product_id: matchedProduct?.id || '',
-            product_name,
-            category: category || matchedProduct?.category?.name || '',
-            qty,
-            buy_price,
-            sell_price
-        });
-
-        ['product_name_search','product_category','product_qty','buy_price','sell_price','product_note', 'current_stock'].forEach(id=>{
-            const el = document.getElementById(id);
-            if(el) el.value = '';
-        });
-
-        selectedProduct = null;
-        hideProductSuggestions();
-    });
-
-    document.getElementById('paid_amount').addEventListener('input', recalcTotals);
-
-    document.getElementById('supplier_id').addEventListener('change', async function(){
-        recalcTotals();
-
-        const id = this.value;
-        if(!id){
-            document.getElementById('supplier_phone').value = '';
-            document.getElementById('supplier_address').value = '';
-            return;
-        }
-
-        try{
-           const res = await axios.post('/supplier-by-id',
-    { id: id },
-    {
-        headers: {
-            'id': localStorage.getItem('user_id')
-        }
-    }
-);
-            document.getElementById('supplier_phone').value = res.data?.mobile || '';
-            document.getElementById('supplier_address').value = res.data?.address || '';
-        }catch(err){
-            console.error(err);
-        }
-    });
-
-   document.getElementById('add_due_row_btn')
-    .addEventListener('click', () => addDueRow());
-
-    document.getElementById('purchaseForm').addEventListener('submit', async function(e){
-        e.preventDefault();
- const paid = parseFloat(document.getElementById('paid_amount').value) || 0;
-
-    // ❌ VALIDATION (ADD HERE)
-    if (paid <= 0) {
-        Toastify({
-            text: "Paid amount is required (must be greater than 0)",
-            duration: 3000,
-            gravity: "top",
-            position: "center",
-            backgroundColor: "red",
-        }).showToast();
-
-        document.getElementById('paid_amount').focus();
-        return; // 🚫 STOP FORM SUBMIT
-    }
-        try{
-            const items = [];
-            document.querySelectorAll('#purchaseList .purchase-row').forEach(row=>{
-                const product_id = row.querySelector('[name*="[product_id]"]')?.value || '';
-                const product_name = row.querySelector('[name*="[product_name]"]')?.value || '';
-                const category = row.querySelector('[name*="[category]"]')?.value || '';
-              const qty = row.querySelector('.row-qty')?.value || 0;
-const buy_price = row.querySelector('.row-buy')?.value || 0;
-const sell_price = row.querySelector('.row-sell')?.value || 0;
-
-                if(product_name || qty || buy_price || sell_price){
-                    items.push({
-                        product_id,
-                        product_name,
-                        category,
-                        qty,
-                        buy_price,
-                        sell_price
-                    });
-                }
-            });
-
-            const due_plan = [];
-            document.querySelectorAll('#dueScheduleBody tr').forEach(row=>{
-                due_plan.push({
-                    due_date: row.querySelector('[name*="[due_date]"]')?.value || '',
-                    amount: row.querySelector('[name*="[amount]"]')?.value || 0,
-                    note: row.querySelector('[name*="[note]"]')?.value || ''
-                });
-            });
-
-            const formData = new FormData();
-            formData.append('supplier_id', document.getElementById('supplier_id').value);
-            formData.append('invoice_no', document.getElementById('invoice_no').value);
-            formData.append('purchase_date', document.getElementById('purchase_date').value);
-            formData.append('paid_amount', document.getElementById('paid_amount').value);
-            formData.append('items', JSON.stringify(items));
-            formData.append('due_plan', JSON.stringify(due_plan));
-
-            const res = await axios.post('/stock-store', formData, {
-                headers: {
-                    'content-type': 'multipart/form-data',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                }
-            });
-
-          if(res.data && res.data.status === 'success'){
-    alert('Stock Purchase Saved Successfully');
-
-    document.getElementById('invoice_no').value = generateInvoiceNo();
-
-                document.getElementById('purchaseForm').reset();
-                document.getElementById('purchaseList').innerHTML = '';
-                document.getElementById('dueScheduleBody').innerHTML = '';
-
-                itemIndex = 1;
-                dueIndex = 0;
-                addDueRow();
-                recalcTotals();
-            }else{
-                alert('Request failed');
-            }
-        }catch(err){
-            console.error(err);
-            alert('Error saving purchase');
-        }
-    });
-
-(async function init(){
-
-    // 🔥 set instantly (no waiting)
-    const today = new Date();
-    const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
-        .toISOString()
-        .split('T')[0];
-
-    document.getElementById('purchase_date').value = localDate;
-
-    // invoice also instant
-    document.getElementById('invoice_no').value = generateInvoiceNo();
-
-    // then API calls
-    await loadSupplierList();
-    await loadProductList();
-    await loadCategoryList();
-
-    addDueRow();
-    recalcTotals();
-
-})();
-
-document.getElementById('toggle_due_btn').addEventListener('click', function () {
-    const drawer = document.getElementById('dueDrawer');
-    const arrow = document.getElementById('due_arrow');
-
-    if (drawer.style.display === 'none') {
-        drawer.style.display = 'block';
-        arrow.innerHTML = '▴'; // up arrow
-    } else {
-        drawer.style.display = 'none';
-        arrow.innerHTML = '▾'; // down arrow
     }
 });
 
-</script>
+
+// SAVE PRODUCT
+async function SaveProduct(){
+
+    let productCategory =
+        document.getElementById('productCategory').value;
+
+    let productSubCategory =
+        document.getElementById('productSubCategory').value;
+
+    let productName =
+        document.getElementById('productName').value;
+
+    let productQuantity =
+        document.getElementById('productQuantity').value;
+
+    let productBuyPrice =
+        document.getElementById('productBuyPrice').value;
+
+    let productSellPrice =
+        document.getElementById('productSellPrice').value;
+
+    let productNote =
+        document.getElementById('productNote').value;
+
+    let productImg =
+        document.getElementById('productImg').files[0];
+
+
+    // VALIDATION
+    if(productCategory.length === 0){
+
+        errorToast("Category Required");
+
+    }
+    else if(productName.length === 0){
+
+        errorToast("Product Name Required");
+
+    }
+    else if(productQuantity.length === 0){
+
+        errorToast("Quantity Required");
+
+    }
+    else if(productBuyPrice.length === 0){
+
+        errorToast("Buy Price Required");
+
+    }
+    else if(productSellPrice.length === 0){
+
+        errorToast("Sell Price Required");
+
+    }
+    else{
+
+        let formData = new FormData();
+
+        if(productImg){
+            formData.append('img', productImg);
+        }
+
+        formData.append('name', productName);
+        formData.append('quantity', productQuantity);
+        formData.append('buy_price', productBuyPrice);
+        formData.append('sell_price', productSellPrice);
+        formData.append('note', productNote);
+        formData.append('category_id', productCategory);
+        formData.append('subcategory_id', productSubCategory);
+
+        const config = {
+            headers:{
+                'content-type':'multipart/form-data'
+            }
+        };
+
+        showLoader();
+
+        try{
+
+            let res = await axios.post(
+                "/create-product",
+                formData,
+                config
+            );
+
+            hideLoader();
+
+            if(res.status === 201){
+
+                successToast("Product Added Successfully");
+
+                // CLOSE MODAL
+                $('#createProductModal').modal('hide');
+
+                // RESET FORM
+                document
+                    .getElementById("save-product-form")
+                    .reset();
+
+                // RESET IMAGE
+                document.getElementById('newImg').src =
+                    "{{asset('images/default.jpg')}}";
+
+                // RELOAD PRODUCT LIST
+                await ProductList();
+
+            }
+            else{
+                errorToast("Request Failed");
+            }
+
+        }catch(e){
+
+            hideLoader();
+            errorToast("Something Went Wrong");
+        }
+    }
+}
+
+    </script>
+
 @endsection
